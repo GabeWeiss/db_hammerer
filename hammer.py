@@ -53,3 +53,22 @@ for currentArgument, currentValue in arguments:
     elif currentArgument in ("-i", "--interval"):
         OP_INTERVAL = currentValue
 
+try:
+    mydb = mysql.connector.connect(
+        host="127.0.0.1", # This is because we use the proxy
+        user=DB_USER,
+        passwd=DB_PASS,
+        database=DB_NAME
+    )
+except Error as e:
+    print ("Couldn't connect to the MySQL instance.")
+    sys.exit(2)
+
+mycursor = mydb.cursor()
+
+# ~50/second running locally. Need to test this from a K8 cluster of course to proper rate adjust
+
+#t = time.time()
+#while time.time() < t + 1:
+#    mycursor.execute("INSERT INTO data (random) VALUES ('abcd')")
+#mydb.commit()
