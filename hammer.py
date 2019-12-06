@@ -67,8 +67,13 @@ except Error as e:
 mycursor = mydb.cursor()
 
 # ~50/second running locally. Need to test this from a K8 cluster of course to proper rate adjust
+# Can definitely play with the commit being in the while loop so each insert is discrete transaction. Probably
+# need to do that in order to calculate individual commit timings
 
-#t = time.time()
-#while time.time() < t + 1:
-#    mycursor.execute("INSERT INTO data (random) VALUES ('abcd')")
-#mydb.commit()
+t = time.time()
+while time.time() < t + 1:
+    curT = time.time_ns()
+    mycursor.execute("INSERT INTO data (random) VALUES ('abcd')")
+    mydb.commit()
+    curT = time.time_ns() - curT
+    print (curT/1000000) # milliseconds
