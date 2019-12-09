@@ -87,25 +87,38 @@ DATABASE_UNDEFINED    = -1
 DATABASE_SQL          = 1
 DATABASE_SPANNER      = 2
 
+file_obj = open("logs.csv", "w")
+
 error_count = 0
 event_count = 0
 total_event_time = 0.0
 
 spike_state_counter = 0
+transaction_success = True
 while True:
     try:
         try:
+            transaction_success = True
             curT = time.time_ns()
             mycursor.execute("INSERT INTO data (random) VALUES ('abcd')")
             mydb.commit()
-            curT = time.time_ns() - curT
-            duration = curT/1000000
+            duration = (time.time_ns() - curT)/1000000
             event_count = event_count + 1
             total_event_time = total_event_time + duration
             print ("{} ms".format(duration)) # milliseconds
         except Error as e:
+            transaction_success = False
             error_count = error_count + 1
             print (e)
+
+        try:
+            if transaction_success:
+                file_obj.write("{},{}".format(event_count, duration))
+            else:
+                file_obj.write("{},{}".format(event_count, "-1"))
+            file_obj.write("\n")
+        except:
+            print("Couldn't write to file")
 
         if poc.get_write_workload() == WRITE_CONSISTENT_LOW:
             time.sleep(1)
@@ -119,4 +132,5 @@ while True:
     except KeyboardInterrupt:
         print("\n\n")
         print ("Run summary:\n{} events\nTotal transaction time: {} seconds\nAvg transaction time: {} ms\n".format(event_count, total_event_time/1000, total_event_time/event_count))
+        file_obj.close()
         sys.exit(0)
