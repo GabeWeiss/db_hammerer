@@ -53,6 +53,8 @@ for currentArgument, currentValue in arguments:
     elif currentArgument in ("-i", "--interval"):
         OP_INTERVAL = currentValue
 
+import poc
+
 try:
     mydb = mysql.connector.connect(
         host="127.0.0.1", # This is because we use the proxy
@@ -70,12 +72,34 @@ mycursor = mydb.cursor()
 # Can definitely play with the commit being in the while loop so each insert is discrete transaction. Probably
 # need to do that in order to calculate individual commit timings
 
-import poc
+# These values match the prompt questions in poc.py
+READ_UNDEFINED        = -1
+READ_CONSISTENT_HIGH  = 1
+READ_CONSISTENT_LOW   = 2
+READ_SPIKEY           = 3
+
+WRITE_UNDEFINED       = -1
+WRITE_CONSISTENT_HIGH = 1
+WRITE_CONSISTENT_LOW  = 2
+WRITE_SPIKEY          = 3
+
+DATABASE_UNDEFINED    = -1
+DATABASE_SQL          = 1
+DATABASE_SPANNER      = 2
 
 t = time.time()
-while time.time() < t + 1:
+spike_state_counter = 0
+while True:
     curT = time.time_ns()
     mycursor.execute("INSERT INTO data (random) VALUES ('abcd')")
     mydb.commit()
     curT = time.time_ns() - curT
-    print (curT/1000000) # milliseconds
+    print ("{} ms".format(curT/1000000)) # milliseconds
+    if poc.get_write_workload() == WRITE_CONSISTENT_LOW:
+        time.sleep(1)
+    elif poc.get_write_workload() == WRITE_SPIKEY:
+        if spike_state_counter > 20:
+            spike_state_counter = 0
+            time.sleep(3)
+        else:
+            spike_state_counter = spike_state_counter + 1

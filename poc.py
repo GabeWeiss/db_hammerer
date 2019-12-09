@@ -11,6 +11,25 @@ def ask_for_write_workload():
 
 def ask_for_database():
     return input("1) Cloud SQL\n2) Spanner\n3) ??? (for PoC only Cloud SQL will work) ")
+
+def get_read_workload():
+    if read_workload:
+        return int(read_workload)
+    else:
+        return -1
+
+def get_write_workload():
+    if write_workload:
+        return int(write_workload)
+    else:
+        return -1
+
+def get_database():
+    if database_choice:
+        return int(database_choice)
+    else:
+        return -1
+
 read_workload = ask_for_read_workload()
 
 while re.match('[^1-3]+', read_workload):
