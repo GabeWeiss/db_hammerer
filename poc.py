@@ -30,11 +30,11 @@ def get_database():
     else:
         return -1
 
-read_workload = ask_for_read_workload()
+#read_workload = ask_for_read_workload()
 
-while re.match('[^1-3]+', read_workload):
-    print ("\nYour selection for read traffic didn't match one of the options.\n")
-    read_workload = ask_for_read_workload()
+#while re.match('[^1-3]+', read_workload):
+#    print ("\nYour selection for read traffic didn't match one of the options.\n")
+#    read_workload = ask_for_read_workload()
 
 write_workload = ask_for_write_workload()
 
