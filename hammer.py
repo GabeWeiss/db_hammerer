@@ -88,26 +88,35 @@ DATABASE_SQL          = 1
 DATABASE_SPANNER      = 2
 
 error_count = 0
+event_count = 0
+total_event_time = 0.0
 
 spike_state_counter = 0
 while True:
     try:
-        curT = time.time_ns()
-        mycursor.execute("INSERT INTO data (random) VALUES ('abcd')")
-        mydb.commit()
-        curT = time.time_ns() - curT
-        print ("{} ms".format(curT/1000000)) # milliseconds
-    except Error as e:
-        error_count = error_count + 1
-        print (e)
+        try:
+            curT = time.time_ns()
+            mycursor.execute("INSERT INTO data (random) VALUES ('abcd')")
+            mydb.commit()
+            curT = time.time_ns() - curT
+            duration = curT/1000000
+            event_count = event_count + 1
+            total_event_time = total_event_time + duration
+            print ("{} ms".format(duration)) # milliseconds
+        except Error as e:
+            error_count = error_count + 1
+            print (e)
 
-    if poc.get_write_workload() == WRITE_CONSISTENT_LOW:
-        time.sleep(1)
-    elif poc.get_write_workload() == WRITE_SPIKEY:
-        if spike_state_counter > 20:
-            spike_state_counter = 0
-            print("")
-            time.sleep(3)
-        else:
-            spike_state_counter = spike_state_counter + 1
-
+        if poc.get_write_workload() == WRITE_CONSISTENT_LOW:
+            time.sleep(1)
+        elif poc.get_write_workload() == WRITE_SPIKEY:
+            if spike_state_counter > 20:
+                spike_state_counter = 0
+                print("")
+                time.sleep(3)
+            else:
+                spike_state_counter = spike_state_counter + 1
+    except KeyboardInterrupt:
+        print("\n\n")
+        print ("Run summary:\n{} events\nTotal transaction time: {} seconds\nAvg transaction time: {} ms\n".format(event_count, total_event_time/1000, total_event_time/event_count))
+        sys.exit(0)
