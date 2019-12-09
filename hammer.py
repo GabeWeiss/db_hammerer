@@ -70,6 +70,8 @@ mycursor = mydb.cursor()
 # Can definitely play with the commit being in the while loop so each insert is discrete transaction. Probably
 # need to do that in order to calculate individual commit timings
 
+import poc
+
 t = time.time()
 while time.time() < t + 1:
     curT = time.time_ns()
