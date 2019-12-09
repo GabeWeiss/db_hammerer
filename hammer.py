@@ -87,19 +87,27 @@ DATABASE_UNDEFINED    = -1
 DATABASE_SQL          = 1
 DATABASE_SPANNER      = 2
 
-t = time.time()
+error_count = 0
+
 spike_state_counter = 0
 while True:
-    curT = time.time_ns()
-    mycursor.execute("INSERT INTO data (random) VALUES ('abcd')")
-    mydb.commit()
-    curT = time.time_ns() - curT
-    print ("{} ms".format(curT/1000000)) # milliseconds
+    try:
+        curT = time.time_ns()
+        mycursor.execute("INSERT INTO data (random) VALUES ('abcd')")
+        mydb.commit()
+        curT = time.time_ns() - curT
+        print ("{} ms".format(curT/1000000)) # milliseconds
+    except Error as e:
+        error_count = error_count + 1
+        print (e)
+
     if poc.get_write_workload() == WRITE_CONSISTENT_LOW:
         time.sleep(1)
     elif poc.get_write_workload() == WRITE_SPIKEY:
         if spike_state_counter > 20:
             spike_state_counter = 0
+            print("")
             time.sleep(3)
         else:
             spike_state_counter = spike_state_counter + 1
+
