@@ -8,8 +8,23 @@ import mysql.connector
 from mysql.connector import Error
 from mysql.connector import errorcode
 
-PATTERN_CONSISTENT = 1  # consistent
-PATTERN_SPIKEY     = 2  # spikey
+# These values match the prompt questions in poc.py
+READ_UNDEFINED        = -1
+READ_CONSISTENT_HIGH  = 1
+READ_CONSISTENT_LOW   = 2
+READ_SPIKEY           = 3
+READ_UB               = READ_SPIKEY # should be equal to the highest value of READ_
+
+WRITE_UNDEFINED       = -1
+WRITE_CONSISTENT_HIGH = 1
+WRITE_CONSISTENT_LOW  = 2
+WRITE_SPIKEY          = 3
+WRITE_UB              = WRITE_SPIKEY # should be equal to the highest value WRITE_
+
+DATABASE_UNDEFINED    = -1
+DATABASE_SQL          = 1
+DATABASE_SPANNER      = 2
+DATABASE_UB           = DATABASE_SPANNER # should be equal to the highest value DATABASE_
 
 # from config import DB_USER, DB_PASS and DB_NAME
 DB_USER     = os.environ.get("DB_USER", None)
@@ -53,7 +68,19 @@ for currentArgument, currentValue in arguments:
     elif currentArgument in ("-i", "--interval"):
         OP_INTERVAL = currentValue
 
-import poc
+if not os.environ.get("HAMMER_SILENT"):
+    import poc
+    write_mode = poc.get_write_workload()
+else:
+    # use try here to ensure that the value that's been set for WRITE_MODE is valid
+    try:
+        write_mode = int(os.environ.get("WRITE_MODE", None))
+        if write_mode > WRITE_UB:
+            print ("The WRITE_MODE environment variable was not set to a valid write mode. Please see hammer.py for valid values for this variable.")
+            sys.exit(2)
+    except:
+        print("The WRITE_MODE environment variable was not set to a valid int value. Please see hammer.py for valid values for this variable.")
+        sys.exit(2)
 
 try:
     mydb = mysql.connector.connect(
@@ -71,21 +98,6 @@ mycursor = mydb.cursor()
 # ~50/second running locally. Need to test this from a K8 cluster of course to proper rate adjust
 # Can definitely play with the commit being in the while loop so each insert is discrete transaction. Probably
 # need to do that in order to calculate individual commit timings
-
-# These values match the prompt questions in poc.py
-READ_UNDEFINED        = -1
-READ_CONSISTENT_HIGH  = 1
-READ_CONSISTENT_LOW   = 2
-READ_SPIKEY           = 3
-
-WRITE_UNDEFINED       = -1
-WRITE_CONSISTENT_HIGH = 1
-WRITE_CONSISTENT_LOW  = 2
-WRITE_SPIKEY          = 3
-
-DATABASE_UNDEFINED    = -1
-DATABASE_SQL          = 1
-DATABASE_SPANNER      = 2
 
 file_obj = open("logs.csv", "w")
 
@@ -120,9 +132,9 @@ while True:
         except:
             print("Couldn't write to file")
 
-        if poc.get_write_workload() == WRITE_CONSISTENT_LOW:
+        if write_mode == WRITE_CONSISTENT_LOW:
             time.sleep(1)
-        elif poc.get_write_workload() == WRITE_SPIKEY:
+        elif write_mode == WRITE_SPIKEY:
             if spike_state_counter > 20:
                 spike_state_counter = 0
                 print("")
