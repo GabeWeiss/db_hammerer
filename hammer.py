@@ -91,6 +91,7 @@ try:
     )
 except Error as e:
     print ("Couldn't connect to the MySQL instance.")
+    print (e)
     sys.exit(2)
 
 mycursor = mydb.cursor()
